@@ -1,11 +1,59 @@
 // src/views/Overview.jsx
 import React, { useState } from "react";
+import { Pie, Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(
+  ArcElement,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  Legend
+);
 
 const Overview = () => {
   const totalStudents = 120;
   const upcomingClasses = 3;
   const pendingAssignments = 5;
   const notifications = 2;
+
+  // Attendance chart data
+  const attendanceData = {
+    labels: ["Present", "Absent"],
+    datasets: [
+      {
+        data: [95, 25], // Example values
+        backgroundColor: ["#4f46e5", "#f87171"],
+        hoverOffset: 4,
+      },
+    ],
+  };
+
+  // Academic performance chart data
+  const academicData = {
+    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+    datasets: [
+      {
+        label: "Average Score",
+        data: [75, 80, 85, 78, 90, 88],
+        fill: true,
+        borderColor: "#4f46e5",
+        backgroundColor: "rgba(79,70,229,0.2)",
+        tension: 0.3,
+      },
+    ],
+  };
 
   // State for schedule
   const [todaySchedule, setTodaySchedule] = useState([
@@ -109,6 +157,18 @@ const Overview = () => {
         <div className="bg-white p-4 rounded shadow-sm">
           <p className="text-gray-500">Notifications</p>
           <p className="text-2xl font-bold">{notifications}</p>
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white p-6 rounded shadow-sm">
+          <h3 className="text-lg font-semibold mb-4">Attendance Overview</h3>
+          <Pie data={attendanceData} />
+        </div>
+        <div className="bg-white p-6 rounded shadow-sm">
+          <h3 className="text-lg font-semibold mb-4">Academic Scores Trend</h3>
+          <Line data={academicData} />
         </div>
       </div>
 

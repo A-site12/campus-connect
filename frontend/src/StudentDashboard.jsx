@@ -1,228 +1,251 @@
-import React, { useEffect, useState } from "react";
-import { Pie, Bar } from "react-chartjs-2";
+// src/StudentDashboard.jsx
+import React, { useState, useEffect } from "react";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  ArcElement,
-  BarElement,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { FaBell, FaUserCircle, FaChartLine, FaClipboardList, FaHome } from "react-icons/fa";
+  FaHome,
+  FaClipboardList,
+  FaChartLine,
+  FaUser,
+  FaBell,
+  FaPaperPlane,
+  FaEdit,
+  FaSignOutAlt,
+} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import StudentOverview from "./views/StudentOverview";
+import MockTests from "./views/MockTests";
+import StudentResults from "./views/StudentResults";
+import StudentProfile from "./views/StudentProfile";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  ArcElement,
-  BarElement,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+const StudentDashboard = () => {
+  const [activeTab, setActiveTab] = useState("overview");
+  const navigate = useNavigate();
 
-const StudentDashboard = ({ user, onLogout }) => {
-  const [data, setData] = useState({});
-  const quotes = [
-    "Believe you can and you're halfway there.",
-    "Don't watch the clock; do what it does. Keep going.",
-    "The harder you work for something, the greater you'll feel when you achieve it.",
-    "Dream it. Wish it. Do it.",
-    "Success is not for the lazy.",
-    "Your limitation—it’s only your imagination.",
-    "Push yourself, because no one else is going to do it for you."
-  ];
-  const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+  // request system
+  const [teachers] = useState(["Mr. Sharma", "Ms. Gupta", "Dr. Reddy"]);
+  const [selectedTeacher, setSelectedTeacher] = useState("");
+  const [requestText, setRequestText] = useState("");
+  const [requestHistory, setRequestHistory] = useState(
+    JSON.parse(localStorage.getItem("studentRequests")) || []
+  );
+  const [editingIndex, setEditingIndex] = useState(null);
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("studentData")) || {};
-    if (stored[user.username]) setData(stored[user.username]);
-  }, [user.username]);
+    localStorage.setItem("studentRequests", JSON.stringify(requestHistory));
+  }, [requestHistory]);
 
-  const attendanceData = {
-    labels: ["Attended", "Absent"],
-    datasets: [{
-      label: "Attendance",
-      data: [
-        data.mockTests?.filter(t => t.attended).length || 0,
-        data.mockTests?.filter(t => !t.attended).length || 0
-      ],
-      backgroundColor: ["#4ade80", "#f87171"],
-      borderColor: ["#22c55e", "#ef4444"],
-      borderWidth: 1
-    }]
-  };
+  const handleRequest = () => {
+    if (!selectedTeacher || !requestText.trim()) return;
 
-  const scoreData = {
-    labels: data.mockTests?.map(t => t.date) || [],
-    datasets: [
-      {
-        label: "Monthly Test",
-        data: data.mockTests?.map(t => t.monthlyScore || 0) || [],
-        backgroundColor: "#60a5fa"
-      },
-      {
-        label: "Quiz",
-        data: data.mockTests?.map(t => t.quizScore || 0) || [],
-        backgroundColor: "#facc15"
-      },
-      {
-        label: "Assignment",
-        data: data.mockTests?.map(t => t.assignmentScore || 0) || [],
-        backgroundColor: "#34d399"
-      },
-      {
-        label: "Practical",
-        data: data.mockTests?.map(t => t.practicalScore || 0) || [],
-        backgroundColor: "#f472b6"
-      },
-      {
-        label: "Attendance",
-        data: data.mockTests?.map(t => (t.attended ? 100 : 0)) || [],
-        backgroundColor: "#4ade80"
-      }
-    ]
-  };
-
-  const pieOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom"
-      }
+    if (editingIndex !== null) {
+      const updated = [...requestHistory];
+      updated[editingIndex] = {
+        ...updated[editingIndex],
+        teacher: selectedTeacher,
+        message: requestText,
+      };
+      setRequestHistory(updated);
+      setEditingIndex(null);
+    } else {
+      const newReq = {
+        teacher: selectedTeacher,
+        message: requestText,
+        status: "Pending",
+        date: new Date().toLocaleString(),
+      };
+      setRequestHistory([...requestHistory, newReq]);
     }
+
+    setSelectedTeacher("");
+    setRequestText("");
   };
 
-  const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top"
-      },
-      tooltip: {
-        mode: "index",
-        intersect: false
-      }
-    },
-    scales: {
-      x: {
-        stacked: false,
-        title: {
-          display: true,
-          text: "Test Dates"
-        }
-      },
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: "Scores"
-        }
-      }
-    }
+  const handleLogout = () => {
+    localStorage.removeItem("studentRequests");
+    localStorage.removeItem("studentToken"); // if you store login token
+    navigate("/login"); // redirect back to login page
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md p-5 flex flex-col justify-between">
+      <aside className="w-64 bg-white shadow-lg flex flex-col justify-between">
         <div>
-          <h2 className="text-2xl font-bold mb-8 text-purple-600">Student Dashboard</h2>
-          <nav className="space-y-4 text-gray-700 mb-6">
-            <a href="#" className="flex items-center gap-3 p-2 rounded hover:bg-purple-100"><FaHome /> Overview</a>
-            <a href="#" className="flex items-center gap-3 p-2 rounded hover:bg-purple-100"><FaClipboardList /> Mock Tests</a>
-            <a href="#" className="flex items-center gap-3 p-2 rounded hover:bg-purple-100"><FaChartLine /> Results</a>
-            <a href="#" className="flex items-center gap-3 p-2 rounded hover:bg-purple-100"><FaUserCircle /> Profile</a>
-          </nav>
-
-          {/* Motivational Quote Section */}
-          <div className="bg-purple-50 p-4 rounded shadow text-sm text-gray-700">
-            <h4 className="font-semibold mb-2">💡 Motivation</h4>
-            <p className="italic">"{randomQuote}"</p>
+          <div className="p-6 border-b">
+            <h2 className="text-2xl font-bold text-indigo-600">
+              Student Panel
+            </h2>
           </div>
+          <nav className="flex-1 p-4 space-y-2">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`flex items-center gap-3 w-full p-3 rounded-lg transition ${
+                activeTab === "overview"
+                  ? "bg-indigo-600 text-white"
+                  : "hover:bg-indigo-100 text-gray-700"
+              }`}
+            >
+              <FaHome /> Overview
+            </button>
+            <button
+              onClick={() => setActiveTab("mocktests")}
+              className={`flex items-center gap-3 w-full p-3 rounded-lg transition ${
+                activeTab === "mocktests"
+                  ? "bg-indigo-600 text-white"
+                  : "hover:bg-indigo-100 text-gray-700"
+              }`}
+            >
+              <FaClipboardList /> Mock Tests
+            </button>
+            <button
+              onClick={() => setActiveTab("results")}
+              className={`flex items-center gap-3 w-full p-3 rounded-lg transition ${
+                activeTab === "results"
+                  ? "bg-indigo-600 text-white"
+                  : "hover:bg-indigo-100 text-gray-700"
+              }`}
+            >
+              <FaChartLine /> Results
+            </button>
+            <button
+              onClick={() => setActiveTab("profile")}
+              className={`flex items-center gap-3 w-full p-3 rounded-lg transition ${
+                activeTab === "profile"
+                  ? "bg-indigo-600 text-white"
+                  : "hover:bg-indigo-100 text-gray-700"
+              }`}
+            >
+              <FaUser /> Profile
+            </button>
+          </nav>
         </div>
-        <button onClick={onLogout} className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600">Logout</button>
+
+        {/* Logout */}
+        <div className="p-4 border-t">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full p-3 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
+          >
+            <FaSignOutAlt /> Logout
+          </button>
+        </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 p-6">
-        {/* Top Bar */}
-        <div className="flex justify-between items-center mb-6 bg-white p-4 rounded shadow">
-          <input type="text" placeholder="Search..." className="border rounded px-3 py-2 w-1/3" />
-          <div className="flex items-center gap-4">
-            <FaBell className="text-gray-600 cursor-pointer" />
-            <div className="flex items-center gap-2 cursor-pointer">
-              <FaUserCircle className="text-3xl text-gray-600" />
-              <span>{data.name || "Student"}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Welcome Section */}
-        <div className="mb-6 bg-white p-6 rounded shadow">
-          <h1 className="text-2xl font-bold mb-2">Welcome, {data.name || "Student"}</h1>
-          <p className="text-gray-600">Here’s your latest academic information.</p>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white p-4 rounded shadow">
-            <h4 className="text-gray-500 text-sm">Attendance</h4>
-            <p className="text-2xl font-bold">{data.attendance || 0}%</p>
-          </div>
-          <div className="bg-white p-4 rounded shadow">
-            <h4 className="text-gray-500 text-sm">Mock Tests</h4>
-            <p className="text-2xl font-bold">{data.mockTests?.length || 0}</p>
-          </div>
-          <div className="bg-white p-4 rounded shadow">
-            <h4 className="text-gray-500 text-sm">Posts</h4>
-            <p className="text-2xl font-bold">{data.posts?.length || 0}</p>
-          </div>
-        </div>
-
-        {/* Charts Section */}
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded shadow h-80">
-            <h4 className="text-lg font-semibold mb-3">Attendance Overview</h4>
-            {data.mockTests?.length > 0 ? (
-              <Pie data={attendanceData} options={pieOptions} />
-            ) : (
-              <p className="text-gray-500">No attendance data available.</p>
+      {/* Main */}
+      <main className="flex-1 flex flex-col">
+        {/* Topbar */}
+        <header className="flex justify-between items-center bg-white p-4 shadow">
+          <h1 className="text-xl font-semibold text-gray-700">
+            {activeTab === "overview" && "Overview"}
+            {activeTab === "mocktests" && "Mock Tests"}
+            {activeTab === "results" && "Results"}
+            {activeTab === "profile" && "Profile"}
+          </h1>
+          <button className="relative">
+            <FaBell className="text-gray-600 text-xl" />
+            {requestHistory.filter((r) => r.status === "Pending").length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">
+                {requestHistory.filter((r) => r.status === "Pending").length}
+              </span>
             )}
-          </div>
+          </button>
+        </header>
 
-          <div className="bg-white p-6 rounded shadow h-[500px]">
-            <h4 className="text-lg font-semibold mb-3">Academic Overview</h4>
-            {data.mockTests?.length > 0 ? (
-              <Bar data={scoreData} options={barOptions} />
-            ) : (
-              <p className="text-gray-500">No academic data available.</p>
-            )}
-          </div>
-        </div>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {activeTab === "overview" && (
+            <>
+              <StudentOverview />
 
-        {/* Posts Section */}
-        <div className="bg-white p-6 rounded shadow mt-6">
-          <h3 className="text-xl font-semibold mb-4">Posts</h3>
-          {data.posts?.length > 0 ? (
-            <ul className="space-y-4">
-              {data.posts.map((post, i) => (
-                <li key={i} className="border rounded p-4 hover:bg-gray-50">
-                  <p>{post.text}</p>
-                  <p className="text-sm text-gray-500 mt-2">By {post.submittedBy} on {post.date}</p>
-                </li>
-              ))}
-            </ul>
-          ) : <p className="text-gray-500">No posts yet.</p>}
+              {/* Send Request */}
+              <div className="bg-white p-6 rounded-xl shadow mt-6">
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <FaPaperPlane className="text-indigo-600" /> Send Request
+                </h3>
+                <div className="flex flex-col gap-4">
+                  <select
+                    value={selectedTeacher}
+                    onChange={(e) => setSelectedTeacher(e.target.value)}
+                    className="border px-4 py-2 rounded-lg focus:ring-2 focus:ring-indigo-400"
+                  >
+                    <option value="">Select Teacher</option>
+                    {teachers.map((t, i) => (
+                      <option key={i} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                  <textarea
+                    value={requestText}
+                    onChange={(e) => setRequestText(e.target.value)}
+                    placeholder="Write your request details here..."
+                    className="border px-4 py-2 rounded-lg focus:ring-2 focus:ring-indigo-400 min-h-[80px]"
+                  />
+                  <button
+                    onClick={handleRequest}
+                    className="self-start bg-indigo-600 text-white px-6 py-2 rounded-lg shadow hover:bg-indigo-700 transition"
+                  >
+                    {editingIndex !== null ? "Update Request" : "Send Request"}
+                  </button>
+                </div>
+
+                {/* History */}
+                <div className="mt-6">
+                  <h4 className="text-lg font-semibold mb-2">Request History</h4>
+                  {requestHistory.length > 0 ? (
+                    <ul className="space-y-3">
+                      {requestHistory.map((req, i) => (
+                        <li
+                          key={i}
+                          className="flex justify-between items-start p-3 border rounded-lg bg-gray-50"
+                        >
+                          <div>
+                            <p className="font-medium">{req.teacher}</p>
+                            <p className="text-sm text-gray-600">
+                              {req.message}
+                            </p>
+                            <p className="text-xs text-gray-400">{req.date}</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`px-3 py-1 text-sm rounded-full ${
+                                req.status === "Approved"
+                                  ? "bg-green-100 text-green-600"
+                                  : req.status === "Rejected"
+                                  ? "bg-red-100 text-red-600"
+                                  : "bg-yellow-100 text-yellow-600"
+                              }`}
+                            >
+                              {req.status}
+                            </span>
+                            {req.status === "Pending" && (
+                              <button
+                                onClick={() => {
+                                  setSelectedTeacher(req.teacher);
+                                  setRequestText(req.message);
+                                  setEditingIndex(i);
+                                }}
+                                className="text-indigo-600 hover:text-indigo-800"
+                              >
+                                <FaEdit />
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-500">No requests yet.</p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "mocktests" && <MockTests />}
+          {activeTab === "results" && <StudentResults />}
+          {activeTab === "profile" && <StudentProfile />}
         </div>
-      </div>
+      </main>
     </div>
   );
 };

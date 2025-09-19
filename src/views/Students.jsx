@@ -1,4 +1,3 @@
-// src/views/Students.jsx
 import React, { useState } from "react";
 import { Pie, Bar } from "react-chartjs-2";
 import {
@@ -109,7 +108,10 @@ const Students = () => {
     datasets: [
       {
         data: selectedStudent
-          ? [students[selectedStudent].attendance, 100 - students[selectedStudent].attendance]
+          ? [
+              students[selectedStudent].attendance,
+              100 - students[selectedStudent].attendance,
+            ]
           : [0, 100],
         backgroundColor: ["#4CAF50", "#F44336"],
       },
@@ -234,21 +236,39 @@ const Students = () => {
           {/* Student Profile */}
           <div className="bg-white shadow rounded p-6">
             <h3 className="text-lg font-semibold mb-3">📋 Student Details</h3>
-            <p><strong>Name:</strong> {students[selectedStudent].name}</p>
-            <p><strong>Branch:</strong> {students[selectedStudent].branch}</p>
-            <p><strong>Score:</strong> {students[selectedStudent].score}</p>
-            <p><strong>Attendance:</strong> {students[selectedStudent].attendance}%</p>
+            <p>
+              <strong>Name:</strong> {students[selectedStudent].name}
+            </p>
+            <p>
+              <strong>Branch:</strong> {students[selectedStudent].branch}
+            </p>
+            <p>
+              <strong>Score:</strong> {students[selectedStudent].score}
+            </p>
+            <p>
+              <strong>Attendance:</strong> {students[selectedStudent].attendance}%
+            </p>
           </div>
 
           {/* Charts */}
           <div className="bg-white shadow rounded p-6 flex flex-col md:flex-row justify-around gap-6">
             <div className="w-full md:w-1/2">
               <h4 className="text-center mb-2 font-semibold">📊 Attendance</h4>
-              <Pie data={attendanceData} />
+              <div className="h-64">
+                <Pie
+                  data={attendanceData}
+                  options={{ responsive: true, maintainAspectRatio: false }}
+                />
+              </div>
             </div>
             <div className="w-full md:w-1/2">
               <h4 className="text-center mb-2 font-semibold">📈 Score</h4>
-              <Bar data={scoreData} options={{ responsive: true, maintainAspectRatio: false }} height={200}/>
+              <div className="h-64">
+                <Bar
+                  data={scoreData}
+                  options={{ responsive: true, maintainAspectRatio: false }}
+                />
+              </div>
             </div>
           </div>
         </div>

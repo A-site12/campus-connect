@@ -25,15 +25,17 @@ const LoginPage = ({ onLogin }) => {
   };
 
   return (
-    <div className="flex h-screen">
-      {/* Left Illustration */}
-      <div className="hidden md:flex w-1/2 items-center justify-center bg-gray-50">
-        <img
-          src="https://undraw.co/api/illustrations/secure-login.svg"
-          alt="Login Illustration"
-          className="max-w-md"
-        />
-      </div>
+   <div className="flex h-screen">
+  {/* Left Illustration */}
+  <div className="hidden md:flex w-1/2 items-center justify-center bg-gray-50">
+    <img
+      src="/images/image.png" // ✅ Image stored in campus-connect/public/images/
+      alt="Login Illustration"
+      className="w-[950px] h-auto max-w-full rounded-xl shadow-lg"
+    />
+  </div>
+
+
 
       {/* Right Form Section */}
       <div className="flex w-full md:w-1/2 items-center justify-center bg-gradient-to-r from-purple-600 to-blue-500">

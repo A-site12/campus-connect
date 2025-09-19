@@ -1,5 +1,5 @@
 // src/TeacherDashboard.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaBell,
   FaUserCircle,
@@ -19,7 +19,7 @@ const TeacherDashboard = ({ user, onLogout }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
 
-  // 🔹 Students state
+  // Students state (dummy example)
   const [students, setStudents] = useState({
     1: { name: "Alice", branch: "CSE", attendance: 85, score: 90 },
     2: { name: "Bob", branch: "ECE", attendance: 75, score: 80 },
@@ -30,36 +30,27 @@ const TeacherDashboard = ({ user, onLogout }) => {
   const [name, setName] = useState("");
   const [attendance, setAttendance] = useState("");
 
-  // 🔹 Requests state (for bell icon)
-  const [requests, setRequests] = useState([
-    {
-      id: 1,
-      student: "Alice",
-      branch: "CSE",
-      date: "2025-09-19",
-      request: "Attendance correction",
-    },
-    {
-      id: 2,
-      student: "Bob",
-      branch: "ECE",
-      date: "2025-09-18",
-      request: "Profile update",
-    },
-    {
-      id: 3,
-      student: "Charlie",
-      branch: "ME",
-      date: "2025-09-17",
-      request: "Exam re-evaluation",
-    },
-  ]);
+  // 🔹 Requests state
+  const [requests, setRequests] = useState([]);
+
+  // Load from localStorage
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("requests")) || [];
+    setRequests(saved);
+  }, []);
+
+  // Update localStorage when requests change
+  useEffect(() => {
+    localStorage.setItem("requests", JSON.stringify(requests));
+  }, [requests]);
 
   // 🔹 Approve/Reject
   const handleAction = (id, action) => {
-    setRequests((prev) => prev.filter((req) => req.id !== id));
+    const updated = requests.map((req) =>
+      req.id === id ? { ...req, status: action } : req
+    );
+    setRequests(updated);
     setSelectedRequest(null);
-    alert(`Request ${action} successfully!`);
   };
 
   // 🔹 Update handler
@@ -91,29 +82,45 @@ const TeacherDashboard = ({ user, onLogout }) => {
             <strong>Student:</strong> {selectedRequest.student}
           </p>
           <p>
-            <strong>Branch:</strong> {selectedRequest.branch}
+            <strong>Teacher:</strong> {selectedRequest.teacher}
           </p>
           <p>
             <strong>Date:</strong> {selectedRequest.date}
           </p>
           <p>
-            <strong>Request:</strong> {selectedRequest.request}
+            <strong>Message:</strong> {selectedRequest.message}
+          </p>
+          <p>
+            <strong>Status:</strong>{" "}
+            <span
+              className={`${
+                selectedRequest.status === "Approved"
+                  ? "text-green-600"
+                  : selectedRequest.status === "Rejected"
+                  ? "text-red-600"
+                  : "text-yellow-600"
+              } font-semibold`}
+            >
+              {selectedRequest.status}
+            </span>
           </p>
 
-          <div className="flex gap-4 mt-4">
-            <button
-              onClick={() => handleAction(selectedRequest.id, "Approved")}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-            >
-              Approve
-            </button>
-            <button
-              onClick={() => handleAction(selectedRequest.id, "Rejected")}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-            >
-              Reject
-            </button>
-          </div>
+          {selectedRequest.status === "Pending" && (
+            <div className="flex gap-4 mt-4">
+              <button
+                onClick={() => handleAction(selectedRequest.id, "Approved")}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => handleAction(selectedRequest.id, "Rejected")}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Reject
+              </button>
+            </div>
+          )}
 
           <button
             onClick={() => setSelectedRequest(null)}
@@ -216,9 +223,9 @@ const TeacherDashboard = ({ user, onLogout }) => {
                 className="text-2xl text-gray-700 cursor-pointer"
                 onClick={() => setShowNotifications(!showNotifications)}
               />
-              {requests.length > 0 && (
+              {requests.filter((r) => r.status === "Pending").length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                  {requests.length}
+                  {requests.filter((r) => r.status === "Pending").length}
                 </span>
               )}
             </div>
@@ -244,21 +251,23 @@ const TeacherDashboard = ({ user, onLogout }) => {
           <div className="absolute right-10 top-16 bg-white shadow rounded p-4 w-64 z-10">
             <h4 className="font-semibold mb-2">Requests</h4>
             <ul className="text-sm space-y-2">
-              {requests.length === 0 ? (
+              {requests.filter((r) => r.status === "Pending").length === 0 ? (
                 <li className="text-gray-500">No pending requests</li>
               ) : (
-                requests.map((req) => (
-                  <li
-                    key={req.id}
-                    className="cursor-pointer hover:bg-gray-100 p-2 rounded"
-                    onClick={() => {
-                      setSelectedRequest(req);
-                      setShowNotifications(false);
-                    }}
-                  >
-                    {req.student} - {req.request}
-                  </li>
-                ))
+                requests
+                  .filter((r) => r.status === "Pending")
+                  .map((req) => (
+                    <li
+                      key={req.id}
+                      className="cursor-pointer hover:bg-gray-100 p-2 rounded"
+                      onClick={() => {
+                        setSelectedRequest(req);
+                        setShowNotifications(false);
+                      }}
+                    >
+                      {req.student} - {req.message}
+                    </li>
+                  ))
               )}
             </ul>
           </div>

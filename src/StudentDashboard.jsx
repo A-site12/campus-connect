@@ -1,4 +1,3 @@
-// src/StudentDashboard.jsx
 import React, { useState, useEffect } from "react";
 import {
   FaHome,
@@ -16,53 +15,67 @@ import MockTests from "./views/MockTests";
 import StudentResults from "./views/StudentResults";
 import StudentProfile from "./views/StudentProfile";
 
-const StudentDashboard = () => {
+const StudentDashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState("overview");
   const navigate = useNavigate();
 
-  // request system
+  // Teachers list
   const [teachers] = useState(["Mr. Sharma", "Ms. Gupta", "Dr. Reddy"]);
   const [selectedTeacher, setSelectedTeacher] = useState("");
   const [requestText, setRequestText] = useState("");
-  const [requestHistory, setRequestHistory] = useState(
-    JSON.parse(localStorage.getItem("studentRequests")) || []
-  );
+  const [requestHistory, setRequestHistory] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
 
+  // Load requests from localStorage
   useEffect(() => {
-    localStorage.setItem("studentRequests", JSON.stringify(requestHistory));
-  }, [requestHistory]);
+    const allRequests = JSON.parse(localStorage.getItem("requests")) || [];
+    if (user?.name) {
+      const myRequests = allRequests.filter((r) => r.student === user.name);
+      setRequestHistory(myRequests);
+    }
+  }, [user]);
 
+  // Save/update request
   const handleRequest = () => {
-    if (!selectedTeacher || !requestText.trim()) return;
+    if (!selectedTeacher || !requestText.trim() || !user?.name) return;
+
+    const allRequests = JSON.parse(localStorage.getItem("requests")) || [];
 
     if (editingIndex !== null) {
-      const updated = [...requestHistory];
-      updated[editingIndex] = {
-        ...updated[editingIndex],
-        teacher: selectedTeacher,
-        message: requestText,
-      };
-      setRequestHistory(updated);
+      // Update existing request
+      const updatedAll = allRequests.map((req, idx) =>
+        req.student === user.name && idx === editingIndex
+          ? { ...req, teacher: selectedTeacher, message: requestText }
+          : req
+      );
+      localStorage.setItem("requests", JSON.stringify(updatedAll));
       setEditingIndex(null);
     } else {
+      // Create new request
       const newReq = {
+        id: Date.now(),
+        student: user.name,
         teacher: selectedTeacher,
         message: requestText,
         status: "Pending",
         date: new Date().toLocaleString(),
       };
-      setRequestHistory([...requestHistory, newReq]);
+      allRequests.push(newReq);
+      localStorage.setItem("requests", JSON.stringify(allRequests));
     }
+
+    // Refresh history
+    const refreshed = JSON.parse(localStorage.getItem("requests")) || [];
+    setRequestHistory(refreshed.filter((r) => r.student === user.name));
 
     setSelectedTeacher("");
     setRequestText("");
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("studentRequests");
-    localStorage.removeItem("studentToken"); // if you store login token
-    navigate("/login"); // redirect back to login page
+    localStorage.removeItem("studentToken"); // keep requests safe
+    if (onLogout) onLogout();
+    navigate("/login"); // redirect to login
   };
 
   return (
@@ -74,6 +87,9 @@ const StudentDashboard = () => {
             <h2 className="text-2xl font-bold text-indigo-600">
               Student Panel
             </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {user?.name || "Student"}
+            </p>
           </div>
           <nav className="flex-1 p-4 space-y-2">
             <button
@@ -190,12 +206,14 @@ const StudentDashboard = () => {
 
                 {/* History */}
                 <div className="mt-6">
-                  <h4 className="text-lg font-semibold mb-2">Request History</h4>
+                  <h4 className="text-lg font-semibold mb-2">
+                    Request History
+                  </h4>
                   {requestHistory.length > 0 ? (
                     <ul className="space-y-3">
                       {requestHistory.map((req, i) => (
                         <li
-                          key={i}
+                          key={req.id}
                           className="flex justify-between items-start p-3 border rounded-lg bg-gray-50"
                         >
                           <div>
@@ -243,7 +261,7 @@ const StudentDashboard = () => {
 
           {activeTab === "mocktests" && <MockTests />}
           {activeTab === "results" && <StudentResults />}
-          {activeTab === "profile" && <StudentProfile />}
+          {activeTab === "profile" && <StudentProfile user={user} />}
         </div>
       </main>
     </div>

@@ -6,50 +6,79 @@ import users from "./accounts";
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const user = users.find(u => u.username === username && u.password === password);
+    const user = users.find(
+      (u) => u.username === username && u.password === password
+    );
+
     if (user) {
-      // Save user in localStorage
       localStorage.setItem("user", JSON.stringify(user));
-
-      // Update user state in App.jsx
       onLogin(user);
-
-      // Redirect to dashboard
       navigate("/dashboard");
     } else {
-      alert("Invalid credentials ❌");
+      setError("Invalid username or password ❌");
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form onSubmit={handleSubmit} className="bg-white shadow-lg p-6 rounded-lg w-96">
-        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-          className="w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300"
+    <div className="flex h-screen">
+      {/* Left Illustration */}
+      <div className="hidden md:flex w-1/2 items-center justify-center bg-gray-50">
+        <img
+          src="https://undraw.co/api/illustrations/secure-login.svg"
+          alt="Login Illustration"
+          className="max-w-md"
         />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          className="w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300"
-        />
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-        >
-          Login
-        </button>
-      </form>
+      </div>
+
+      {/* Right Form Section */}
+      <div className="flex w-full md:w-1/2 items-center justify-center bg-gradient-to-r from-purple-600 to-blue-500">
+        <div className="bg-white p-10 rounded-2xl shadow-xl w-96">
+          <h2 className="text-3xl font-bold text-center text-purple-600 mb-6">
+            Welcome!
+          </h2>
+
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+
+            {error && (
+              <p className="text-red-500 text-sm mb-3 text-center">{error}</p>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="w-1/2 bg-purple-600 text-white p-3 rounded-lg hover:bg-purple-700 transition"
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                className="w-1/2 border border-purple-600 text-purple-600 p-3 rounded-lg hover:bg-purple-50 transition"
+              >
+                Create Account
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 };
